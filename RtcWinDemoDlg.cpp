@@ -322,7 +322,17 @@ void CRtcWinDemoDlg::OnBnClickedBtnLeave()
 
 void CRtcWinDemoDlg::OnBnClickedBtnSend()
 {
+	//处理输入的message
+	//如果为空，return
+	//将开头结尾的空字符\s去掉，如果长度为0，return
+	
+	//将处理后的message广播 如何广播？还没有找到方法
 
+	//将sender和message 显示到对话框中
+	//AppendMessage(sender + ":\n", true);
+	//AppendMessage(message + "\n", false);
+
+	//将输入框清空
 }
 
 int CRtcWinDemoDlg::ConvertMethodToCommand(std::string method) {
