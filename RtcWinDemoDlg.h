@@ -74,6 +74,7 @@ public:
 
 	void JoinRoom();
 	void LeaveRoom();
+	void SendLocalMessage(CString cstrMessage);
 
 	void Publish(std::string uid, std::string &offer_sdp);
 	void UnPublish(std::string uid);
