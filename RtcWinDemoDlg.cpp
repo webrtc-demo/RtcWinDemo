@@ -320,9 +320,37 @@ void CRtcWinDemoDlg::OnBnClickedBtnLeave()
 	}
 }
 
+/*
+* {"notification":true,"method":"broadcast","data":{"info":{"msg":"hello","senderName":"vivo"},"rid":"byte","uid":"2556a3dc-32f1-44c5-85b0-4516fa92f8d1"}}
+*/
 void CRtcWinDemoDlg::OnBnClickedBtnSend()
 {
+	CString strMessage;
+	if (!joined_room_) return;
+	
+	m_editMessage.GetWindowText(strMessage);
+	m_editMessage.Clear();
+	if (strMessage.IsEmpty()) return;
 
+	cJSON* root_json = cJSON_CreateObject();
+	cJSON* data_json = cJSON_CreateObject();
+	cJSON* info_json = cJSON_CreateObject();
+	cJSON_AddItemToObject(root_json, "notification", cJSON_CreateBool(true));
+	cJSON_AddItemToObject(root_json, "method", cJSON_CreateString("broadcast"));
+	cJSON_AddItemToObject(root_json, "data", data_json);
+	cJSON_AddItemToObject(data_json, "info", info_json);
+	cJSON_AddItemToObject(info_json, "msg", cJSON_CreateString(CStringToStdString(strMessage).c_str()));
+	cJSON_AddItemToObject(info_json, "senderName", cJSON_CreateString(user_name_.c_str()));
+	cJSON_AddItemToObject(data_json, "rid", cJSON_CreateString(room_id_.c_str()));
+	cJSON_AddItemToObject(data_json, "uid", cJSON_CreateString(user_id_.c_str()));
+
+	char* request = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+
+	LogPrintf(request);
+	if (websocket_ && request) {
+		websocket_->sendMessage(std::make_shared<std::string>(request));
+	}
 }
 
 int CRtcWinDemoDlg::ConvertMethodToCommand(std::string method) {
