@@ -66,6 +66,8 @@ public:
 
 	virtual void AddTrack(webrtc::VideoTrackInterface* track, bool is_local);
 	virtual void RemoveTrack(webrtc::VideoTrackInterface* track);
+	// adjust
+	void Adjust();
 
 	virtual void OnIceCandidate(std::string uid, const std::string mid, const std::string sdp);
 
@@ -86,6 +88,7 @@ public:
 	void OnPeerNotifyEvent(bool join, cJSON *json);
 	void OnStreamNotifyEvent(bool add, cJSON *json);
 	void OnChatMessage(cJSON* json);
+	void SendChatMessage(std::string msg);
 
 	long AllocateSession(int request, std::string uid);
 	std::shared_ptr<RequestRecord> FindSession(long sessionId);
@@ -101,7 +104,7 @@ public:
 	void RemoveAllClients();
 
 	void PublishLocalStream(bool publish);
-	void AppendMessage(CString strMsg, bool title);
+	void AppendMessage(CString strMsg, bool title, bool self);
 
 // 实现
 protected:
@@ -125,6 +128,8 @@ protected:
 	std::atomic_bool local_published_;
 	std::atomic_bool auto_publish_;
 	long session_id_;
+	int TrackNum = 0;  // 视频数目
+
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
