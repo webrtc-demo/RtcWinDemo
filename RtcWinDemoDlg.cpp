@@ -110,7 +110,6 @@ BOOL CRtcWinDemoDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO: 在此添加额外的初始化代码
 	RTCManagerConfig config;
 	rtc_manager_ = std::make_shared<RTCManager>(config, this);
 
@@ -128,9 +127,6 @@ BOOL CRtcWinDemoDlg::OnInitDialog()
 	srand(GetTickCount());
 	session_id_ = rand()%0xFFFF;
 
-	// TODO: delete the following sentence
-	m_editRoomId.SetWindowTextW(L"11");
-	m_editUserId.SetWindowTextW(L"2");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
