@@ -322,17 +322,57 @@ void CRtcWinDemoDlg::OnBnClickedBtnLeave()
 
 void CRtcWinDemoDlg::OnBnClickedBtnSend()
 {
-	//处理输入的message
+	if (!joined_room_) {
+		return;
+	}
+	//获取输入的message
+	CString cstr_message;
+	m_editMessage.GetWindowText(cstr_message);
+
 	//如果为空，return
-	//将开头结尾的空字符\s去掉，如果长度为0，return
+	if (cstr_message.IsEmpty()) {
+		return;
+	}
+	bool all_space = CStringToStdString(cstr_message).find_first_not_of(' ') == std::string::npos;
+	if (all_space) {
+		return;
+	}
 	
-	//将处理后的message广播 如何广播？还没有找到方法
+	//将处理后的message广播
+	BroadcastChatMessage(cstr_message);
 
 	//将sender和message 显示到对话框中
-	//AppendMessage(sender + ":\n", true);
-	//AppendMessage(message + "\n", false);
+	AppendMessage(StdStringToCString(user_name_+":\n"), true);
+	AppendMessage(cstr_message + _T("\n"), false);
 
 	//将输入框清空
+	// m_editMessage.Clear();
+	m_editMessage.SetSel(0, -1);
+	m_editMessage.Clear();
+}
+
+void CRtcWinDemoDlg::BroadcastChatMessage(CString cstr_message) {
+	std::string message = CStringToStdString(cstr_message);
+
+	cJSON* root_json = cJSON_CreateObject();
+	cJSON* data_json = cJSON_CreateObject();
+	cJSON* info_json = cJSON_CreateObject();
+	cJSON_AddItemToObject(root_json, "notification", cJSON_CreateBool(true));
+	cJSON_AddItemToObject(root_json, "method", cJSON_CreateString("broadcast"));
+	cJSON_AddItemToObject(root_json, "data", data_json);
+	cJSON_AddItemToObject(data_json, "info", info_json);
+	cJSON_AddItemToObject(info_json, "msg", cJSON_CreateString(message.c_str()));
+	cJSON_AddItemToObject(info_json, "senderName", cJSON_CreateString(user_name_.c_str()));
+	cJSON_AddItemToObject(data_json, "rid", cJSON_CreateString(room_id_.c_str()));
+	cJSON_AddItemToObject(data_json, "uid", cJSON_CreateString(user_id_.c_str()));
+
+	char* request = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+
+	LogPrintf(request);
+	if (websocket_ && request) {
+		websocket_->sendMessage(std::make_shared<std::string>(request));
+	}
 }
 
 int CRtcWinDemoDlg::ConvertMethodToCommand(std::string method) {
@@ -955,6 +995,10 @@ void CRtcWinDemoDlg::OnChatMessage(cJSON* root_json) {
 		if (info_json) {
 			cJSON* sender_json = cJSON_GetObjectItem(info_json, "senderName");
 			sender = cJSON_GetStringValue(sender_json);
+			//如果是本地消息，return
+			if (sender == user_name_) { 
+				return;
+			}
 
 			cJSON* msg_json = cJSON_GetObjectItem(info_json, "msg");
 			message = cJSON_GetStringValue(msg_json);

@@ -102,6 +102,7 @@ public:
 
 	void PublishLocalStream(bool publish);
 	void AppendMessage(CString strMsg, bool title);
+	void BroadcastChatMessage(CString message); //广播聊天消息
 
 // 实现
 protected:
