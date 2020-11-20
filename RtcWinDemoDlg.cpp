@@ -267,28 +267,7 @@ HWND CRtcWinDemoDlg::AllocateWindow(bool is_local, std::string track_id) {
 	if (is_local) {
 		pWnd = GetDlgItem(IDC_LOCAL_WIN);
 	} else {
-		int remote_win_array[3] = {IDC_REMOTE_WIN_1, IDC_REMOTE_WIN_2, IDC_REMOTE_WIN_3};
-		//遍历remote_win_array, 查找可用的remote_win
-		for (int i = 0; i < 3; i++)
-		{
-			pWnd = GetDlgItem(remote_win_array[i]);
-			if (pWnd) {
-				//查找pWnd->GetSafeHwnd()是否已被占用
-				auto it = map_of_video_renders_.begin();
-				while (it != map_of_video_renders_.end()) {
-					//如果发现pWnd->GetSafeHwnd()已被占用, 将pWnd赋值NULL, 跳出while循环，
-					if (it->second->GetWindow() == pWnd->GetSafeHwnd()) { 
-						pWnd = NULL;
-						break;
-					}
-					it++;
-				}
-				//若pWnd->GetSafeHwnd()没有被占用, 则跳出for循环，使用该pWnd
-				if (it == map_of_video_renders_.end()) {
-					break;
-				}
-			}
-		}
+		pWnd = FindAvailableRemoteWindow();
 	}
 	return pWnd ? pWnd->GetSafeHwnd() : NULL;
 }
@@ -1121,4 +1100,32 @@ void CRtcWinDemoDlg::OnDestroy() {
 	websocket_ = nullptr;
 	rtc_manager_ = nullptr;
 	__super::OnDestroy();
+}
+
+CWnd* CRtcWinDemoDlg::FindAvailableRemoteWindow() {
+	CWnd* pWnd = NULL;
+	int remote_win_array[3] = {IDC_REMOTE_WIN_1, IDC_REMOTE_WIN_2, IDC_REMOTE_WIN_3};
+
+	//遍历remote_win_array, 查找可用的remote_win
+	for (int i = 0; i < 3; i++)
+	{
+		pWnd = GetDlgItem(remote_win_array[i]);
+		if (pWnd) {
+			//遍历map_of_video_renders_, 查找pWnd->GetSafeHwnd()是否已被占用
+			auto it = map_of_video_renders_.begin();
+			while (it != map_of_video_renders_.end()) {
+				//如果发现pWnd->GetSafeHwnd()已被占用, 将pWnd赋值NULL, 跳出while循环，
+				if (it->second->GetWindow() == pWnd->GetSafeHwnd()) { 
+					pWnd = NULL;
+					break;
+				}
+				it++;
+			}
+			//若pWnd->GetSafeHwnd()没有被占用, 则跳出for循环，使用该pWnd
+			if (it == map_of_video_renders_.end()) {
+				break;
+			}
+		}
+	}
+	return pWnd;
 }
