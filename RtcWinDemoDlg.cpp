@@ -871,8 +871,11 @@ void CRtcWinDemoDlg::OnPeerNotifyEvent(bool join, cJSON *root_json) {
 		if (uid.empty()) return;
 
 		if (join) {
+			AppendMessageWithIndent(StdStringToCString(name) + _T(" joins the room\n"), true, 8);
 			AddClient(uid, name);
 		} else {
+			name = map_of_users_[uid]->GetUserNameW();
+			AppendMessageWithIndent(StdStringToCString(name) + _T(" leaves the room\n"), true, 8);
 			RemoveClient(uid);
 		}
 	}
@@ -1085,6 +1088,14 @@ void CRtcWinDemoDlg::AppendMessage(CString strMsg, bool title) {
 	m_richeditChat.SetSelectionCharFormat(cf);
 	m_richeditChat.ReplaceSel(strMsg);
 	m_richeditChat.LineScroll(m_richeditChat.GetLineCount() - nOldLines);
+}
+
+void CRtcWinDemoDlg::AppendMessageWithIndent(CString strMsg, bool title, int indent) {
+	for (int i = 0; i < indent; i++)
+	{
+		strMsg = _T(" ") + strMsg;
+	}
+	AppendMessage(strMsg, title);
 }
 
 void CRtcWinDemoDlg::OnDestroy() {
