@@ -223,11 +223,14 @@ void CRtcWinDemoDlg::AddTrack(webrtc::VideoTrackInterface* track, bool is_local)
 	if (track && track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 		std::string track_id = track->id();
 		auto it = map_of_video_renders_.find(track_id);
+		// 如果是最后一个，说明没有find，相当于不存在这个track
+		// 所以应该创建一个，然后进行赋值
 		if (it == map_of_video_renders_.end()) {
 			map_of_video_renders_[track_id] = std::make_shared<webrtc::VideoRenderGDI>(track);
 			map_of_video_renders_[track_id]->SetWindow(AllocateWindow(is_local, track_id));
 			//map_of_video_renders_[track_id]->SetMirrorMode(is_local);
-		} else {
+		}
+		else {
 			it->second->SetTrack(track);
 		}
 	}
@@ -241,6 +244,48 @@ void CRtcWinDemoDlg::RemoveTrack(webrtc::VideoTrackInterface* track) {
 			it->second->SetTrack(nullptr);
 			map_of_video_renders_.erase(it);
 		}
+		// 减少一个轨道
+		TrackNum--;
+		// 调整视频排序
+		Adjust();
+	}
+}
+
+// 调整视频, 将前面空的位置补齐
+void CRtcWinDemoDlg::Adjust() {
+	int windows[3] = { IDC_REMOTE_WIN_1,IDC_REMOTE_WIN_2,IDC_REMOTE_WIN_3 };
+	CWnd* local = GetDlgItem(IDC_LOCAL_WIN);
+
+	int i = 0; // 对应的windows窗口序号
+	auto it = map_of_video_renders_.begin();
+
+	// it没有达到末尾
+	while (it != map_of_video_renders_.end()) {
+		// 获取到第i个视频子窗口
+		CWnd* pwnd = GetDlgItem(windows[i]);
+
+		// 如果it对应的window为local window，那么i不需要进行改变
+		if (it->second->GetWindow() == local->GetSafeHwnd()) {
+			it++;
+			continue;
+		}
+		// 如果track对应的窗口是当前窗口
+		else if (it->second->GetWindow() == pwnd->GetSafeHwnd()) {
+			i++;
+			it++;
+			continue;
+		}
+		else {
+			// 设置每一个track重新对应的窗口
+			it->second->SetWindow(pwnd->GetSafeHwnd());
+			i++;
+			it++;
+		}
+	}
+	// 重新绘制剩余的窗口，删除掉残影
+	for (; i < 3; i++) {
+		auto pWnd = GetDlgItem(windows[i]);
+		pWnd->RedrawWindow();
 	}
 }
 
@@ -266,8 +311,27 @@ HWND CRtcWinDemoDlg::AllocateWindow(bool is_local, std::string track_id) {
 	CWnd* pWnd = NULL;
 	if (is_local) {
 		pWnd = GetDlgItem(IDC_LOCAL_WIN);
-	} else {
-		pWnd = GetDlgItem(IDC_REMOTE_WIN_1);
+	}
+	else {
+		// IDC_REMOTE_WIN_1对应的就是第二个视频框
+		// 根据当前的数目进行判断即可
+		// 这样我们的window可以支持四个窗口了
+		TrackNum++; // 每次分配的时候都进行加一
+
+		switch (TrackNum) {
+		case 1:
+			pWnd = GetDlgItem(IDC_REMOTE_WIN_1);
+			break;
+		case 2:
+			pWnd = GetDlgItem(IDC_REMOTE_WIN_2);
+			break;
+		case 3:
+			pWnd = GetDlgItem(IDC_REMOTE_WIN_3);
+			break;
+		default:
+			pWnd = NULL;
+			break;
+		}
 		if (pWnd) {
 			auto it = map_of_video_renders_.begin();
 			while (it != map_of_video_renders_.end()) {
