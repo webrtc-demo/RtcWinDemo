@@ -104,6 +104,7 @@ public:
 	void AppendMessage(CString strMsg, bool title);
 	void AppendMessageWithIndent(CString strMsg, bool title, int indent);
 	void BroadcastChatMessage(CString message); //广播聊天消息
+	void Adjust(); // 调整窗体位置
 
 // 实现
 protected:
@@ -127,6 +128,7 @@ protected:
 	std::atomic_bool local_published_;
 	std::atomic_bool auto_publish_;
 	long session_id_;
+	int TrackNum = 0;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
